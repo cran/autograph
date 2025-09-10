@@ -1,3 +1,126 @@
+# autograph 0.4.0
+
+## Package
+
+- Fixed DOI in CITATION
+- Improved README introduction
+- Improved README graphing illustration, including igraph comparison figure
+- Improved README plotting illustration, added SAOM/ERGM GOF comparison figure
+
+## Theming
+
+- Improved `stocnet_theme()` documentation
+- Improved `stocnet_theme()` to register a font family for plots
+  - A vector of potential fonts is included for some themes
+  - The first font found on the system will be used, and user notified
+  - If no fonts are found, the default R font ("sans") will be used
+  - A message is printed to inform the user if the default is used,
+  and how to install missing fonts via `{extrafont}`
+- Added font options for "iheid", "oxf", "ethz", "uzh", and "rug" themes
+- Added `ag_font()` for retrieving the registered font family
+- Improved `match_colors()` documentation
+- Exported `is_dark()` and made it vectorised
+- Added `match_colors()` and `is_dark()` tests
+- Dropped `theme_*()` functions in favour of `stocnet_theme()`
+- Dropped `theme_*()` tests
+- Added `stocnet_theme()` tests
+- Added "cmu" theme for Carnegie Mellon University
+
+## Graphing
+
+- Improved `graphr()` by using registered fonts where available
+- Improved `graphr()` by using `ag_qualitative()` for discrete colour scales
+
+## Plotting
+
+- Improved `plot.selectionTable()` and `plot.influenceTable()` documentation
+by consolidating them together into one help file
+- Improved `plot.ag_conv()`, `plot.ag_gof()`, and plot_interp by using 
+registered fonts where available
+- Improved `plot.sienaGOF()` to use lower case auxiliary statistic description
+
+## Data
+
+- Renamed `res_monan_traces` to `monan_conv`
+- Renamed `res_monan_gof` to `monan_gof`
+- Renamed `res_ergm_gof` to `ergm_gof`
+- Renamed `res_siena_gof` to `siena_gof`
+- Renamed `res_siena_influence` to `siena_influence`
+- Renamed `res_siena_selection` to `siena_selection`
+
+# autograph 0.3.1
+
+## Package
+
+- Fixed old citation style issue for CRAN
+
+## Plotting
+
+- Added `plot.ag_conv()` as a new plotting method for convergence diagnostics
+  - Plots MCMC traces as a line plot with loess smoothing highlighting the trend
+  - Plots overall density plot of the samples on the right margin
+- Improved plotting of `{MoNAn}` trace objects by using `plot.ag_conv()`
+- Added `plot.mcmc.list()` for plotting MCMC samples from `ergm::ergm` results objects,
+using `plot.ag_conv()`
+
+## Data
+
+- Added `ergm_res` for testing and illustration of `plot.mcmc.list()`,
+use `ergm_res$sample` to access the MCMC sample
+
+# autograph 0.3.0
+
+## Package
+
+- Added package documentation
+- Added citation
+- Dropped dependencies `{tidyr}`, `{cli}`, and `{concaveman}`
+- Added more description to the function overview sections on the website
+- Added CODECOV_TOKEN to Github secrets for test coverage reporting
+
+## Graphing
+
+- Fixed `graphr()` not using theme colours for node and edge aesthetics
+
+## Plotting
+
+- Added new plot class and method for centralising GOF plotting
+  - Improved `plot.sienaGOF()` and `plot.gof.stats.monan()` to use new plotting method
+  - Added `plot.gof.ergm()` for plotting ERGM GOF objects
+  - Improved GOF plotting by adding boxplot within the violins
+  - Improved GOF plotting by adding crosses for outliers
+  - Improved GOF plotting by adding dashed line for 0.05 and 0.95 quantile bounds
+  - Improved GOF plotting by dropping statistics without variance
+  - Improved GOF plotting by using `cumulative = FALSE` by default
+- Fixed issue with pre-v1.3.20 RSiena::gof() objects, thanks @TomSnijders
+- Added testing of GOF plotting
+- Added testing of measures plotting
+
+## Theming
+
+- Added `set_stocnet_theme()` alias for `stocnet_theme()`
+- Fixed issue with 'oxf' and 'unige' themes not being recognised
+
+## Data
+
+- Added `res_ergm_gof` for testing and illustration of `plot.gof.ergm()`
+
+## Tutorial
+
+- Added visualisation tutorial from manynet
+  - Improved introduction
+  - Improved section on titles, labels, and legends
+  - Improved section explaining base and grid graphics
+  - Added section demonstrating difference between `igraph::plot()`, `ggraph::ggraph()`, and `graphr()`
+  - Added table describing the main arguments of `graphr()` and the visualisation dimensions to which they relate
+  - Added section showing how to use "node_shape" (poorly)
+  - Improved section showing how to use "node_colour" and "node_group"
+  - Added section showing how to use "node_size"
+  - Added section showing how to set a theme
+  - Added section showing how to use "edge_colour" and "edge_size"
+  - Improved section introducing `{patchwork}`, `graphs()`, and `grapht()`
+  - Added plotting section to viz tutorial
+
 # autograph 0.2.0
 
 ## Package
