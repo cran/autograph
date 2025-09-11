@@ -1,7 +1,7 @@
-15156108f3a0c8a7917d1da08d73b59c *DESCRIPTION
+c5e7ec32f368454767e7300120eb7746 *DESCRIPTION
 c31d6e92cd6ba8a1bb644ff6a9a6d596 *LICENSE
-c1a2512803ebc4d1a7711c4a1a6c3f7e *NAMESPACE
-de3214dadca7fcab9877f9e430e8a2de *NEWS.md
+e58669332ffc22832064b6ed5a5137ca *NAMESPACE
+cb7d3f603ea33e1092421d343bfcafdd *NEWS.md
 fa7f920259864a139ac30534072c7b33 *R/autograph-package.R
 d470bbe96d9375c9127898885dfc81ef *R/autograph_utilities.R
 58ab83918c58cebe05e0f19cf967a156 *R/data_precooked.R
@@ -11,7 +11,7 @@ c9fe8f432ff66a69d38881f7c2c8bb56 *R/layout_grid.R
 781e510d770310e150e7f87dce2debc1 *R/layout_matching.R
 5c77a9a44b93f0e1881b749722d8258c *R/layout_partition.R
 6f176fc4430832b10a172b293c4baa4d *R/layout_valence.R
-aaf4e127b7ec9dbf6e1b9d09d1dba796 *R/plot_convergence.R
+07d6413685454be9bbd4c1a7d0ef3322 *R/plot_convergence.R
 79a20b3deb23bc10688420ccc9091eef *R/plot_gof.R
 8f9b2ed63e6b024304d899f01c6eba7d *R/plot_graphr.R
 dba1853800ff7d03c0137a9a152a4e82 *R/plot_graphs.R
@@ -24,8 +24,8 @@ ec6f1316ef0fd20fb6bc47965f85cde4 *R/plot_migraph.R
 ff492b2c9cb8b8cffc572db19c1eab22 *R/theme_match.R
 0f0185bd3c42b3ddd7adb2f75436756e *R/theme_palettes.R
 57c41043f3a892956eb3dc0b1c93eb59 *R/theme_scales.R
-efeae07952ec9587cafa2b830a13047f *R/theme_set.R
-02baeeae66a206d5de6529983256c068 *R/zzz.R
+bddea9319893d8532a75cd9a8ec5d404 *R/theme_set.R
+bbe79f95b68d5f47050a7b12c733dda0 *R/zzz.R
 2bcce1cf9b4a6bd5b4d0f7b3c8c67f9f *README.md
 1bf18d9c216b8d95033f0bd2fe2906b2 *build/partial.rdb
 badf4fabeaf5a913b942ef4cbae96cbc *data/ergm_gof.rda
@@ -65,7 +65,7 @@ c6487c2bae0532cc2e2d2e63661661fa *man/map_member.Rd
 27d5f7bab419f13c95a0a3b578ef8ef2 *man/model_mrqap.Rd
 fac3d78b3b709123772a28d96551cf87 *man/plot.diffusion.Rd
 fff9a831437ec0fc2a615d13b656a721 *man/plot.network_test.Rd
-35192afa334abab7db94be13350dd361 *man/plot_convergence.Rd
+527e34e50e8dc5a7d259f19b5447a287 *man/plot_convergence.Rd
 bf3097688c21105d70e850842c25d205 *man/plot_gof.Rd
 ed1771c2f7cfae13439c2f354f13f574 *man/plot_graphr.Rd
 621a4917ab4183170ed6685f8ab9eabe *man/plot_graphs.Rd
@@ -74,14 +74,14 @@ d299871e277ef7168e5213ce71870484 *man/plot_grapht.Rd
 c28efb737877d708229a863bc7dd1feb *man/reexports.Rd
 fcac8730ea918a7bc0e83e59f277bbdc *man/theme_match.Rd
 1aab6569fe51dfcd61ce38160e3cb548 *man/theme_scales.Rd
-e270ac6f44cac57ba531417b929fc2ae *man/theme_set.Rd
+71a01242da696c1f09cfedddd4dd0ba0 *man/theme_set.Rd
 38123eba88463cb8af9f4e13e42d688a *tests/testthat.R
 74836aca8ba195bf0993c0a50bfc4905 *tests/testthat/degdist.png
 46b495e407ae53af13ffcb42980e6734 *tests/testthat/gofi.png
 d7f1cfaf32a6474fc8fda3af90f3326c *tests/testthat/test-layout_configurational.R
 a59abf8343b4c234b79d6c01cbe72c5e *tests/testthat/test-layout_partition.R
 2a97d48b18e81ba7471ae646437182db *tests/testthat/test-layout_valence.R
-d8cf9d91f42edae458093b7e39800a53 *tests/testthat/test-plot_convergence.R
+5b71432399e74693f281b163276975f9 *tests/testthat/test-plot_convergence.R
 24ee153b15466d86f56451d2e7a39e25 *tests/testthat/test-plot_gof.R
 f0c355e846ad4d2d6ba54230289b58b5 *tests/testthat/test-plot_graphr.R
 21d899a6d37f634c05eb8a86f24ac12c *tests/testthat/test-plot_manynet.R

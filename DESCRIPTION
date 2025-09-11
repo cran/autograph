@@ -1,7 +1,7 @@
 Package: autograph
 Title: Automatic Plotting of Many Graphs
-Version: 0.4.0
-Date: 2025-09-09
+Version: 0.4.1
+Date: 2025-09-11
 Description: Visual exploration and presentation of networks should not be difficult.
    This package includes functions for plotting networks and network-related metrics with sensible and pretty defaults.
    It includes 'ggplot2'-based plot methods for many popular network package classes.
@@ -12,7 +12,7 @@ License: MIT + file LICENSE
 Language: en-GB
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Depends: R (>= 3.6.0), manynet
 Imports: dplyr (>= 1.1.0), ggdendro, ggraph, ggplot2, igraph,
         patchwork, tidygraph
@@ -36,10 +36,10 @@ Config/Needs/website: pkgdown
 Config/testthat/parallel: true
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2025-09-09 16:22:47 UTC; hollway
+Packaged: 2025-09-11 20:00:24 UTC; hollway
 Author: James Hollway [cre, aut, ctb] (IHEID, ORCID:
     <https://orcid.org/0000-0002-8361-9647>),
   Henrique Sposito [ctb] (ORCID: <https://orcid.org/0000-0003-3420-6085>)
 Maintainer: James Hollway <james.hollway@graduateinstitute.ch>
 Repository: CRAN
-Date/Publication: 2025-09-10 06:40:53 UTC
+Date/Publication: 2025-09-11 20:30:21 UTC
