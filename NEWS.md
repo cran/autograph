@@ -1,3 +1,41 @@
+# autograph 0.5.0
+
+## Package
+
+- Shortened startup messages
+
+## Plotting
+
+- Added `plot.goldfish.changepoints()`
+- Added `plot.goldfish.outliers()`
+- Added `plot.mnet()` to avoid `igraph::plot.igraph()` dispatching
+
+## Graphing
+
+- Restructured scripts for improved maintenance and development in the future
+- Fixed `ggplot2::geom_violin()` call in `graphr()` to avoid warnings with ggplot2 v4.0.0
+- Improved `graphr()` internals to rely on a NULL "layout" parameter and `.infer_layout()`
+- Improved `graphr()` to use `match_color()` for diffusion palettes
+- Fixed `graphs()` handling of changing networks
+
+# autograph 0.4.2
+
+## Package
+
+- Added ggpizzas to README
+
+## Plotting
+
+- Fixed node overflow issue and restored marginal density plot in `plot.ag_conv()` by dropping `+.ggplot()`
+- Added automatic legend labelling where node_size or node_color or edge_color is given
+
+## Theming
+
+- Added "hwu" theme for Heriot-Watt University
+- Improved highlight and divergent theme setting to use switch
+- Added some discussion about colour-blindedness to palettes documentation and viz tute
+- Added some instruction on how to customise themes more specifically
+
 # autograph 0.4.1
 
 ## Package
