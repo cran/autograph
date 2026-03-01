@@ -1,7 +1,7 @@
 Package: autograph
-Title: Automatic Plotting of Many Graphs
-Version: 0.5.0
-Date: 2025-11-19
+Title: Automatic Plotting and Theming of Many Graphs
+Version: 0.6.0
+Date: 2026-02-27
 Description: Visual exploration and presentation of networks should not be difficult.
    This package includes functions for plotting networks and network-related metrics with sensible and pretty defaults.
    It includes 'ggplot2'-based plot methods for many popular network package classes.
@@ -16,9 +16,9 @@ RoxygenNote: 7.3.3
 Depends: R (>= 4.0.0), manynet
 Imports: dplyr (>= 1.1.0), ggdendro, ggraph, ggplot2 (>= 4.0.0),
         igraph, patchwork, tidygraph
-Suggests: BiocManager, gganimate, ggforce (>= 0.5.0), gifski,
-        graphlayouts, methods, testthat (>= 3.0.0)
-Enhances: ergm, Rgraphviz, RSiena
+Suggests: gganimate, ggforce (>= 0.5.0), gifski, graphlayouts, methods,
+        testthat (>= 3.0.0)
+Enhances: ergm, RSiena
 Authors@R: 
     c(person(given = "James",
              family = "Hollway",
@@ -36,10 +36,10 @@ Config/Needs/website: pkgdown
 Config/testthat/parallel: true
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2025-11-19 10:10:50 UTC; hollway
+Packaged: 2026-02-27 20:38:01 UTC; hollway
 Author: James Hollway [cre, aut, ctb] (IHEID, ORCID:
     <https://orcid.org/0000-0002-8361-9647>),
   Henrique Sposito [ctb] (ORCID: <https://orcid.org/0000-0003-3420-6085>)
 Maintainer: James Hollway <james.hollway@graduateinstitute.ch>
 Repository: CRAN
-Date/Publication: 2025-11-19 10:50:02 UTC
+Date/Publication: 2026-03-01 06:11:03 UTC
