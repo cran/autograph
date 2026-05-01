@@ -1,7 +1,7 @@
 Package: autograph
 Title: Automatic Plotting and Theming of Many Graphs
-Version: 1.0.0
-Date: 2026-04-04
+Version: 1.0.3
+Date: 2026-05-01
 Description: Visual exploration and presentation of networks should not be difficult.
    This package includes functions for plotting networks and network-related metrics with sensible and pretty defaults.
    It includes 'ggplot2'-based plot methods for many popular network package classes.
@@ -36,10 +36,10 @@ Config/Needs/website: pkgdown
 Config/testthat/parallel: true
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2026-04-04 07:43:29 UTC; hollway
+Packaged: 2026-05-01 11:10:26 UTC; hollway
 Author: James Hollway [cre, aut, ctb] (IHEID, ORCID:
     <https://orcid.org/0000-0002-8361-9647>),
   Henrique Sposito [ctb] (ORCID: <https://orcid.org/0000-0003-3420-6085>)
 Maintainer: James Hollway <james.hollway@graduateinstitute.ch>
 Repository: CRAN
-Date/Publication: 2026-04-04 08:20:10 UTC
+Date/Publication: 2026-05-01 11:40:02 UTC

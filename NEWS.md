@@ -1,3 +1,30 @@
+# autograph 1.0.3
+
+## Plotting
+
+- Fixed the error produced by a namespace reference in a call in `ergm_res` by serializing it, moving to extdata, and loading it via `load_ergm_res()`
+
+# autograph 1.0.2
+
+## Plotting
+
+- Fixed the error produced by a namespace reference in a call in `ergm_res`
+
+# autograph 1.0.1
+
+## Package
+
+- Updated the logo
+
+## Plotting
+
+- Fixed the error in some flavours by removing environment references in included objects
+- Closed #44 by adding example that uses `ggplot2::scale_colour_discrete()` to tweak colour output
+
+## Tutorials
+
+- Fixed the tutorial to use netrics functions
+
 # autograph 1.0.0
 
 ## Package
