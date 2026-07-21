@@ -1,10 +1,20 @@
-graph_edges <- function(p, g, edge_color, edge_size, node_size) {
+graph_edges <- function(p, g, edge_color, edge_size, node_size,
+                        edge_bundle = FALSE) {
+  bundle_geom <- .infer_bundle_geom(edge_bundle)
   if (manynet::is_directed(g)) {
     out <- .infer_directed_edge_mapping(g, edge_color, edge_size, node_size)
-    p <- .map_directed_edges(p, g, out)
+    if (is.null(bundle_geom)) {
+      p <- .map_directed_edges(p, g, out)
+    } else {
+      p <- .map_bundled_edges(p, g, out, bundle_geom, directed = TRUE)
+    }
   } else {
     out <- .infer_edge_mapping(g, edge_color, edge_size)
-    p <- .map_edges(p, g, out)
+    if (is.null(bundle_geom)) {
+      p <- .map_edges(p, g, out)
+    } else {
+      p <- .map_bundled_edges(p, g, out, bundle_geom, directed = FALSE)
+    }
   }
   if (manynet::is_complex(g)) {
     p <- p + ggraph::geom_edge_loop0(edge_alpha = 0.4)
@@ -30,6 +40,13 @@ graph_edges <- function(p, g, edge_color, edge_size, node_size) {
                                                      ifelse(is.null(edge_color) &
                                                               manynet::is_signed(g),
                                                             "Sign", edge_color)))
+  # When linetype varies across ties (signed networks) it is mapped through
+  # aes() as literal "solid"/"dashed" strings, so an identity scale is needed to
+  # use them verbatim. Sign is already labelled by the colour legend, so no
+  # separate linetype legend is drawn.
+  if (length(unique(out[["line_type"]])) > 1) {
+    p <- p + ggraph::scale_edge_linetype_identity()
+  }
   p
 }
 
@@ -50,46 +67,8 @@ graph_edges <- function(p, g, edge_color, edge_size, node_size) {
        "line_type" = .infer_line_type(g))
 }
 
-.infer_ecolor <- function(g, edge_color){
-  if (!is.null(edge_color)) {
-    if (edge_color %in% names(manynet::tie_attribute(g))) {
-      if ("tie_mark" %in% class(manynet::tie_attribute(g, edge_color))) {
-        out <- factor(as.character(manynet::tie_attribute(g, edge_color)),
-                      levels = c("FALSE", "TRUE"))
-      } else out <- as.factor(as.character(manynet::tie_attribute(g, edge_color)))
-      if (length(unique(out)) == 1) {
-        out <- rep("black", manynet::net_ties(g))
-        manynet::snet_info("Please indicate a variable with more than one value or level when mapping edge colors.")
-      }
-    } else {
-      out <- edge_color
-    }
-  } else if (is.null(edge_color) & manynet::is_signed(g)) {
-    out <- factor(ifelse(igraph::E(g)$sign >= 0, "Positive", "Negative"),
-                  levels = c("Positive", "Negative"))
-    if (length(unique(out)) == 1) {
-      out <- "black"
-    }
-  } else {
-    out <- "black"
-  }
-  out
-}
-
-.infer_esize <- function(g, edge_size){
-  if (!is.null(edge_size)) {
-    if (any(edge_size %in% names(manynet::tie_attribute(g)))) {
-      out <- manynet::tie_attribute(g, edge_size)
-    } else {
-      out <- edge_size
-    }
-  } else if (is.null(edge_size) & manynet::is_weighted(g)) {
-    out <- manynet::tie_attribute(g, "weight")
-  } else {
-    out <- 0.5
-  }
-  out
-}
+# .infer_ecolor/.infer_esize/.infer_arrow/.infer_line_type/.check_edge_variables
+# live in R/graph_aes.R, shared with grapht().
 
 .infer_end_cap <- function(g, node_size) {
   nsize <- .infer_nsize(g, node_size)/2
@@ -111,82 +90,86 @@ graph_edges <- function(p, g, edge_color, edge_size, node_size) {
   out
 }
 
-.infer_line_type <- function(g) {
-  if (manynet::is_signed(g)) {
-    out <- ifelse(as.numeric(manynet::tie_signs(g)) >= 0,
-                  "solid", "dashed")
-    # ifelse(length(unique(out)) == 1, unique(out), out)
-  } else out <- "solid"
-  out
-}
-
-.check_edge_variables <- function(g, edge_color, edge_size) {
-  if (!is.null(edge_color)) {
-    if (any(!tolower(edge_color) %in% tolower(igraph::edge_attr_names(g))) &
-        any(!edge_color %in% grDevices::colors())) {
-      manynet::snet_info("Please make sure you spelled `edge_color` variable correctly.")
-    } 
+# Route the three vectorisable edge aesthetics (colour, width, linetype) either
+# through aes() -- when they vary across ties, so ggraph's edge stats expand and
+# subset them alongside the geometry (point expansion in geom_edge_arc, loop
+# removal, faceting) -- or as a constant layer parameter when they are a single
+# value. Passing a per-tie vector as a constant parameter is what breaks signed
+# multiplex/longitudinal networks: it recycles against the wrong length or feeds
+# NA/malformed values straight to grid ("invalid hex digit in 'color' or 'lty'").
+.split_edge_aes <- function(out) {
+  # `mapping` holds unevaluated expressions (not the vectors themselves) so that
+  # do.call(aes, mapping) captures them as quosures resolved lazily against
+  # `out` in the caller's environment -- the same way the aesthetics were
+  # written literally before -- rather than as pre-evaluated constants.
+  keys <- c(ecolor = "edge_colour", esize = "edge_width", line_type = "edge_linetype")
+  exprs <- list(ecolor    = quote(out[["ecolor"]]),
+                esize     = quote(out[["esize"]]),
+                line_type = quote(out[["line_type"]]))
+  mapping <- list(); params <- list()
+  for (nm in names(keys)) {
+    if (length(out[[nm]]) > 1) mapping[[keys[[nm]]]] <- exprs[[nm]]
+    else params[[keys[[nm]]]] <- out[[nm]]
   }
-  if (!is.null(edge_size)) {
-    if (!is.numeric(edge_size) & any(!tolower(edge_size) %in% tolower(igraph::edge_attr_names(g)))) {
-      manynet::snet_info("Please make sure you spelled `edge_size` variable correctly.")
-    } 
-  }
+  list(mapping = mapping, params = params)
 }
 
 .map_directed_edges <- function(p, g, out) {
-  if (length(out[["ecolor"]]) == 1 & length(out[["esize"]]) == 1) {
-    p <- p + ggraph::geom_edge_arc(ggplot2::aes(end_cap = ggraph::circle(c(out[["end_cap"]]), 'mm')),
-                                   edge_colour = out[["ecolor"]], edge_width = out[["esize"]],
-                                   edge_linetype = out[["line_type"]],
-                                   edge_alpha = 0.4, strength = ifelse(igraph::which_mutual(g), 0.2, 0),
-                                   arrow = ggplot2::arrow(angle = 15, type = "closed",
-                                                          length = ggplot2::unit(2, 'mm')))
-  } else if (length(out[["ecolor"]]) > 1 & length(out[["esize"]]) == 1) {
-    p <- p + ggraph::geom_edge_arc(ggplot2::aes(edge_colour = out[["ecolor"]],
-                                                end_cap = ggraph::circle(c(out[["end_cap"]]), 'mm')),
-                                   edge_width = out[["esize"]], edge_linetype = out[["line_type"]],
-                                   edge_alpha = 0.4, strength = ifelse(igraph::which_mutual(g), 0.2, 0),
-                                   arrow = ggplot2::arrow(angle = 15, type = "closed",
-                                                          length = ggplot2::unit(2, 'mm')))
-  } else if (length(out[["ecolor"]]) == 1 & length(out[["esize"]]) > 1) {
-    p <- p + ggraph::geom_edge_arc(ggplot2::aes(edge_width = out[["esize"]],
-                                                end_cap = ggraph::circle(c(out[["end_cap"]]), 'mm')),
-                                   edge_colour = out[["ecolor"]], edge_linetype = out[["line_type"]],
-                                   edge_alpha = 0.4, strength = ifelse(igraph::which_mutual(g), 0.2, 0),
-                                   arrow = ggplot2::arrow(angle = 15, type = "closed",
-                                                          length = ggplot2::unit(2, 'mm')))
-  } else {
-    p <- p + ggraph::geom_edge_arc(ggplot2::aes(edge_colour = getOption("snet_cat")[out[["ecolor"]]],
-                                                edge_width = out[["esize"]],
-                                                end_cap = ggraph::circle(c(out[["end_cap"]]), 'mm')),
-                                   # edge_linetype = out[["line_type"]],
-                                   edge_alpha = 0.4, strength = ifelse(igraph::which_mutual(g), 0.2, 0),
-                                   arrow = ggplot2::arrow(angle = 15, type = "closed",
-                                                          length = ggplot2::unit(2, 'mm')))
-  }
-  p
+  parts <- .split_edge_aes(out)
+  parts$mapping$end_cap <- quote(ggraph::circle(c(out[["end_cap"]]), 'mm'))
+  args <- c(list(mapping = do.call(ggplot2::aes, parts$mapping),
+                 edge_alpha = 0.4,
+                 strength = .infer_arc_strength(g),
+                 arrow = .infer_arrow(out[["esize"]])),
+            parts$params)
+  p + do.call(ggraph::geom_edge_arc, args)
+}
+
+.infer_arc_strength <- function(g) {
+  # `geom_edge_arc()` reciprocated dyads apart (0.2) and draws single ties
+  # straight (0). Its stat removes self-loops before drawing (loops are drawn
+  # separately by `geom_edge_loop0()`), but `strength` is a length-preserving
+  # parameter rather than an aesthetic, so it must exclude loop edges. Otherwise
+  # a full-length (net_ties) vector recycles against the loop-free edge set and
+  # emits "longer object length is not a multiple" warnings on complex networks.
+  strength <- ifelse(igraph::which_mutual(g), 0.2, 0)
+  strength[!igraph::which_loop(g)]
+}
+
+.infer_bundle_geom <- function(edge_bundle) {
+  # Resolves the `edge_bundle` argument to one of ggraph's edge-bundling geom
+  # functions, or NULL when bundling is switched off. `TRUE` is treated as the
+  # force-directed default; a string selects a specific algorithm.
+  if (is.null(edge_bundle) || isFALSE(edge_bundle)) return(NULL)
+  type <- if (isTRUE(edge_bundle)) "force" else tolower(as.character(edge_bundle))
+  type <- match.arg(type, c("force", "path", "minimal"))
+  switch(type,
+         force = ggraph::geom_edge_bundle_force,
+         path = ggraph::geom_edge_bundle_path,
+         minimal = ggraph::geom_edge_bundle_minimal)
+}
+
+.map_bundled_edges <- function(p, g, out, bundle_geom, directed = FALSE) {
+  # Edge-bundling geoms draw paths that are pulled together into bundles, so the
+  # arc `strength`/`end_cap` treatment used for straight/arced edges does not
+  # apply. Directed networks keep arrowheads (scaled via `.infer_arrow()`);
+  # undirected networks omit them. Colour/width mapping is preserved to the
+  # extent the geom's aesthetics allow.
+  arrow <- if (directed) .infer_arrow(out[["esize"]]) else NULL
+  parts <- .split_edge_aes(out)
+  # Bundling merges edges into shared paths whose stat inserts NA-separated
+  # break points, so a per-tie linetype cannot be represented (the NAs reach
+  # grid as invalid linetypes). Drop a varying linetype and draw bundles solid;
+  # a linetype shared by every tie is already in `parts$params` and is kept.
+  parts$mapping[["edge_linetype"]] <- NULL
+  args <- c(list(edge_alpha = 0.4, arrow = arrow), parts$params)
+  if (length(parts$mapping)) args$mapping <- do.call(ggplot2::aes, parts$mapping)
+  p + do.call(bundle_geom, args)
 }
 
 .map_edges <- function(p, g, out) {
-  if (length(out[["ecolor"]]) == 1 & length(out[["esize"]]) == 1) {
-    p <- p + ggraph::geom_edge_link0(edge_width = out[["esize"]],
-                                     edge_colour = out[["ecolor"]],
-                                     edge_alpha = 0.4,
-                                     edge_linetype = out[["line_type"]])
-  } else if (length(out[["ecolor"]]) > 1 & length(out[["esize"]]) == 1) {
-    p <- p + ggraph::geom_edge_link0(ggplot2::aes(edge_colour = out[["ecolor"]]),
-                                     edge_width = out[["esize"]],
-                                     edge_alpha = 0.4,
-                                     edge_linetype = out[["line_type"]])
-  } else if (length(out[["ecolor"]]) == 1 & length(out[["esize"]]) > 1) {
-    p <- p + ggraph::geom_edge_link0(ggplot2::aes(edge_width = out[["esize"]]),
-                                     edge_colour = out[["ecolor"]],
-                                     edge_alpha = 0.4,
-                                     edge_linetype = out[["line_type"]])
-  } else {
-    p <- p + ggraph::geom_edge_link0(ggplot2::aes(edge_width = out[["esize"]],
-                                                  edge_colour = out[["ecolor"]]),
-                                     edge_alpha = 0.4, edge_linetype = out[["line_type"]])
-  }
+  parts <- .split_edge_aes(out)
+  args <- c(list(edge_alpha = 0.4), parts$params)
+  if (length(parts$mapping)) args$mapping <- do.call(ggplot2::aes, parts$mapping)
+  p + do.call(ggraph::geom_edge_link0, args)
 }

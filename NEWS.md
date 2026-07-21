@@ -1,3 +1,109 @@
+# autograph 1.1.1
+
+## Graphing
+
+- Fixed `grapht()` example, which took too long to run, by couching it in `\donttest{}`
+- Improved `graphs()` to accept bare longitudinal or dynamic networks
+  - Splits it into waves or time slices automatically (consistent with `grapht()`), 
+  instead of erroring with "invalid to use names()<- on an S4 object of class 'dgCMatrix'"
+- Fixed various errors and warnings in `graphr()`/`graphs()` on signed, directed, or changing networks:
+  - Fixed recycling warnings ("longer object length is not a multiple of shorter object length") in `graphr()` on a complex network
+    - arc geom's `strength` parameter now excludes loop edges, which are drawn separately by `geom_edge_loop0()`
+  - Fixed spurious warning ("no non-missing arguments to max; returning -Inf") in `graphr()` on a changing network without any adoption events (e.g. `fict_potter`)
+    - such networks now rendered as standard changing networks rather than routed through the diffusion node-colour mapping
+  - Fixed fails at draw time with "invalid hex digit in 'color' or 'lty'" in `graphr()` on a signed multiplex network (e.g. `fict_marvel`)
+    - ties on non-signed layers (which have a missing sign) are now drawn solid/positive rather than passing `NA` to grid
+  - Fixed error with "Aesthetics must be either length 1 or the same as the data" in `graphr()`/`graphs()` on signed longitudinal or directed networks (e.g. `to_waves(ison_monks)`)
+    - per-tie sign linetypes are now mapped through `aes()` (with an identity scale) so ggraph's edge geoms expand and subset them consistently with edge colour and width
+  - Fixed `graphr(..., snap = TRUE)` erroring on two-mode networks: their default "hierarchy" layout is now left un-snapped (with an informative message) since collapsing its layered coordinates onto a square grid is not meaningful, while snapping a two-mode network under a force-directed layout continues to work; also hardened the grid-snapping search so a coordinate landing exactly on a grid point is no longer mistaken for a node's zero self-distance
+
+## Tutorials
+
+- Updated visualisation tutorial with a bit more structuring of further options
+
+# autograph 1.1.0
+
+## Package
+
+- Test coverage raised by introducing functional testing infrastructure (`tests/testthat/helper-functional.R` and `test-functional_*.R`) for:
+  - the layout family
+  - the `plot.*` S3 method family
+  - the `ag_*` palette accessors across all themes
+  - `graphr()`'s aesthetic arguments each enumerated automatically and audited against fixture grids
+- Removed the unused internal helper `seq_nodes()`
+- Excluded the interactive-only palette helper `ggpizza()` from coverage
+- Added `{migraph}` to Suggests (used in tests only)
+
+## Graphing
+
+- Improved how `graphr()` treats labels
+  - Fixed labels overlapping nodes (closes #13): labels now keep clear of node borders automatically by giving ggrepel each node's true rendered size, with `label_dist` adding a further points-based gap (mirroring igraph's `vertex.label.dist`) and `label_repel = FALSE` selecting a fixed offset instead of repulsion. 
+  - This also fixed a pre-existing bug where non-repelled labels rendered with a fully transparent fill under this package's theme, making them invisible over nodes. 
+- Improved `grapht()` has been rewritten for smoother, more consistent animations of dynamic networks
+  - Node positions now transition seamlessly between waves using the dynamic stress layout
+    from `{graphlayouts}` (`layout_as_dynamic()`), with a new `alpha` argument controlling
+    layout stability; other layouts are computed once on the aggregate network and held fixed
+  - Changing node composition is now handled properly: every node that ever appears gets a
+    stable position and fades in and out in place as it enters and exits the network
+  - New `isolates` argument (`"keep"` or `"fade"`) controls whether temporarily isolated nodes
+    stay visible or fade out; `keep_isolates` is deprecated
+  - Dynamic (time-stamped, event-based) networks such as `irps_nuclear` are now split
+    automatically into cumulative time slices via `manynet::to_slices()`, so a single
+    dynamic network object passed to `grapht()` works without manual conversion
+  - Interval (spell) networks that record tie `begin`/`end` lifespans, such as `irps_wwi`,
+    are now split automatically into one snapshot per change point showing the ties active
+    in that spell, so `grapht(irps_wwi)` works directly (previously it errored because such
+    networks are dynamic but carry no `time` attribute for `to_slices()`); `irps_wwi` is now
+    a runnable example in the documentation
+  - `grapht()` now uses the dynamic stress layout by default even for two-mode networks
+    (rather than a hierarchy layout, which collapsed many nodes onto a line), suppresses
+    node labels by default for networks with more than 30 nodes to keep frames legible,
+    and fades densely overlapping ties so they read as a density gradient rather than a
+    solid mass
+  - Fixed an error when animating networks whose node names contain non-ASCII characters
+  - Waves without any ties are no longer silently dropped
+  - Closer visual parity with `graphr()`: directed networks get arrowheads on segments trimmed
+    at the target node, signed networks distinguish positive/negative ties by linetype and
+    colour, mapped aesthetics use the same palettes with factor levels consistent across
+    frames, and legends transition along with the animation
+  - Aesthetic-resolution helpers are now shared between `graphr()` and `grapht()`
+    (new R/graph_aes.R), so styling cannot drift between static and animated plots
+  - Added a test suite for `grapht()` (no gif rendering required)
+  - Now aborts with a clear message when its input cannot be split into waves or slices, instead of failing much later with a cryptic igraph error (closes #40); the underlying cause — `to_waves()` silently ignoring a time attribute not named "wave" — will be fixed in `{manynet}` 2.2.2, and the tutorial example now uses a `wave` attribute, which splits correctly with `{manynet}` 2.2.1
+- Added an `edge_bundle` argument to `graphr()` for bundling edges in dense networks (closes #19): 
+  - `TRUE`/`"force"` uses force-directed bundling, with `"path"` and `"minimal"` selecting the other non-hierarchical algorithms
+  - colour/width/linetype mappings are preserved and directed networks keep their arrowheads. 
+  - This wires up ggraph's non-hierarchical bundling geoms (added in ggraph 2.2.0), which were previously imported but never called, so the ggraph dependency is now `(>= 2.2.0)`
+- Fixed `edge_size = 0` not fully suppressing edges on directed networks (closes #50): arrowhead length was hard-coded regardless of `edge_size`, leaving a visible arrowhead when the line was hidden. Arrow length now scales with the resolved edge width (capped so heavily-weighted edges don't get oversized heads) and is omitted entirely when the width is 0
+- Fixed two-mode auto-shapes assigning circles to the second mode: the first mode now takes circles and the second squares, as intended
+- Fixed `graphr()` returning an empty plot for networks consisting only of isolates (e.g. the empty dyad/triad motifs): isolates are now kept whenever removing them would empty the graph
+- Fixed `graphs()` erroring on lists containing tie-less networks (e.g. `plot()` on motif censuses): panels sharing a layout now keep isolates so every node has a coordinate in every wave
+- Fixed `graphr()` erroring on weight or size attributes carrying measure classes (e.g. `tie_measure` results from `{netrics}` stored as attributes)
+- Fixed a vector-recycling warning in `graphs()`' ego-network detection
+
+## Tutorials
+
+- Fixed the "Tying up loose ends" exercise in the visualisation tutorial erroring on `tie_closeness()` (closes #39): the tutorial now loads `{netrics}` and uses its measure functions (`tie_by_closeness()`, `tie_is_triangular()`), and every tutorial code chunk is now exercised by the functional tests below
+- Reworked the "Visualising Networks" tutorial to match the structure and features of the `{manynet}` v2.2 tutorials
+  - Rebranded the tutorial in autograph red, with larger, more readable text and matching 'Run code' buttons
+  - Added a checkbox Aims section, "Catching up", "Going further", "Beginner note", and "In brief" callout boxes, per-page mini-tables of contents, and free play sections with a choose-your-own-data difficulty ladder
+  - Added hover-over glossary terms throughout and a closing Summary section with a function overview table and glossary
+  - Added quiz questions with feedback, and hints for the coding exercises
+  - New coverage of `edge_bundle`, `label_repel`/`label_dist`, the `isolates` argument, `snap` grid-snapping, autograph's own special-purpose layouts, and programmatic export with `ggsave()`
+  - New sections on directed networks (automatic, width-scaled arrowheads and manual control via `edge_size`), automatic mode shapes in two-mode networks, and manually adjusting a layout's coordinate table before passing it back via `x`/`y`
+  - Added artist-themed gifs throughout, including as quiz-answer feedback
+- Added a static, read-only version of the tutorial as a pkgdown article ("Tutorials" menu on the website), as in `{manynet}`
+- Added functional testing of all tutorial code chunks (`tests/testthat/test-tutorials_autograph.R`), mirroring `{manynet}`'s tutorial testing infrastructure
+
+## Layouts
+
+- Fixed `layout_tbl_graph_layered()` ordering nodes by the names rather than the positions of their neighbours in adjacent layers, which degraded every barycenter sweep to NA and raised warnings
+- Replaced deprecated `dplyr::case_match()` with `dplyr::recode_values()`
+
+## Plotting
+
+- Fixed `plot.matrix()` erroring when no `membership` argument was supplied, for both one-mode and two-mode matrices
+
 # autograph 1.0.3
 
 ## Plotting

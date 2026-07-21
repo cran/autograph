@@ -24,6 +24,15 @@
 #'   or a mix, "both", of them.
 #' @family mapping
 #' @param netlist A list of manynet-compatible networks.
+#'   This can also be a single manynet network object that encodes time,
+#'   which will be split automatically (as in `grapht()`):
+#'   longitudinal or changing networks are split into waves via
+#'   `manynet::to_waves()`; dynamic (time-stamped, event-based) networks
+#'   such as `manynet::irps_nuclear` into cumulative time slices via
+#'   `manynet::to_slices()`; and interval (spell) networks that record tie
+#'   `begin`/`end` lifespans, such as `manynet::irps_wwi`, into one snapshot
+#'   per change point. It can also be a diffusion model result from e.g.
+#'   `manynet::play_diffusion()`.
 #' @param waves Numeric, the number of plots to be displayed side-by-side.
 #'   If missing, the number of plots will be reduced to the first and last
 #'   when there are more than four plots.
@@ -42,10 +51,17 @@
 graphs <- function(netlist, waves,
                    based_on = c("first", "last", "both"), ...) {
   based_on <- match.arg(based_on)
-  if (manynet::is_manynet(netlist) && manynet::is_changing(netlist)){
-    if (manynet::is_list(attr(netlist, "network"))) netlist <- attr(netlist, "network") else
-      netlist <- manynet::to_waves(netlist)
-  } 
+  # A single manynet network that encodes time is split into a list of
+  # snapshots, mirroring grapht()'s handling (see .split_time_network()):
+  # longitudinal/changing networks (and diffusion results) into waves,
+  # spell (begin/end) networks into per-period snapshots, and other dynamic
+  # (event) networks into cumulative slices. Splitting is why a bare
+  # longitudinal or dynamic network can be passed directly; without it the
+  # raw graph object would be iterated over and crash later.
+  if (!manynet::is_list(netlist) &&
+      (manynet::is_manynet(netlist) || inherits(netlist, "diff_model"))) {
+    netlist <- .split_time_network(netlist)
+  }
   if (missing(waves)) {
     if (length(netlist) > 4) {
       netlist <- netlist[c(1, length(netlist))]
@@ -57,24 +73,31 @@ graphs <- function(netlist, waves,
   }
   if (is.null(names(netlist))) names(netlist) <- rep("", length(netlist))
   if (length(unique(lapply(netlist, length))) == 1) {
+    # Sharing a layout requires every panel to draw every node, so isolates
+    # are kept unless the user explicitly asks otherwise
+    dots <- list(...)
+    if (!"isolates" %in% names(dots)) dots$isolates <- "keep"
+    shared_graphr <- function(net, extra = NULL)
+      do.call(graphr, c(list(net), dots, extra))
     if (based_on == "first") {
-      lay <- graphr(netlist[[1]], ...)
+      lay <- shared_graphr(netlist[[1]])
       x <- lay$data$x
       y <- lay$data$y
     } else if (based_on == "last") {
-      lay <- graphr(netlist[[length(netlist)]], ...)
+      lay <- shared_graphr(netlist[[length(netlist)]])
       x <- lay$data$x
       y <- lay$data$y
     } else if (based_on == "both") {
-      lay <- graphr(netlist[[1]], ...)
+      lay <- shared_graphr(netlist[[1]])
       x1 <- lay$data$x
       y1 <- lay$data$y
-      lay1 <- graphr(netlist[[length(netlist)]], ...)
+      lay1 <- shared_graphr(netlist[[length(netlist)]])
       x <- (lay1$data$x + x1)/2
       y <- (lay1$data$y + y1)/2
     }
     gs <- lapply(1:length(netlist), function(i)
-      graphr(netlist[[i]], x = x, y = y, ...) + ggtitle(names(netlist)[i]))
+      shared_graphr(netlist[[i]], list(x = x, y = y)) +
+        ggtitle(names(netlist)[i]))
   } else {
     thisRequires("methods")
     if (!methods::hasArg("layout") & is_ego_network(netlist)) {
@@ -96,13 +119,9 @@ graphs <- function(netlist, waves,
 # `graphs()` helper functions
 is_ego_network <- function(nlist) {
   if (all(unique(names(nlist)) != "")) {
-    length(names(nlist)) == length(unique(unlist(unname(lapply(nlist, manynet::node_names))))) &
-      all(order_alphabetically(names(nlist)) ==
-            order_alphabetically(unique(unlist(unname(lapply(nlist, manynet::node_names))))))
+    all_names <- unique(unlist(unname(lapply(nlist, manynet::node_names))))
+    length(names(nlist)) == length(all_names) &&
+      setequal(names(nlist), all_names)
   } else FALSE
-}
-
-order_alphabetically <- function(v) {
-  v[order(names(stats::setNames(v, v)))]
 }
 
