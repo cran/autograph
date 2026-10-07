@@ -20,6 +20,7 @@ graphr(
   label_dist = NULL,
   label_repel = TRUE,
   edge_bundle = FALSE,
+  edge_arrows = NULL,
   backbone = NULL,
   .shared = NULL,
   ...,
@@ -99,6 +100,10 @@ A single number is always read as a depth of ranks rather than as one
 node's position, so a lone node is best named, as in \code{labels = "Alice"}.
 For networks of more than 30 nodes, \code{labels} defaults to a selection
 rather than to every node; pass \code{labels = TRUE} for all of them.
+For a concept lattice from \code{manynet::to_concepts()}, \code{labels} defaults to
+the concepts at which a node of the original network first appears,
+so that each of those nodes is named once, as in a Hasse diagram,
+and the concepts named only by their position are left unlabelled.
 Ranking nodes uses the \code{{netrics}} package, which is suggested rather than
 required: without it installed, an automatic selection falls back to a
 random sample.
@@ -175,7 +180,9 @@ gap left between labels and node borders -- similar to \code{igraph}'s
 \code{vertex.label.dist}. Node size is always accounted for automatically
 (larger nodes push labels further away without any extra configuration);
 \code{label_dist} adds further spacing on top of that, and defaults to a
-small gap (5pt). Set to \code{0} for labels right at the node border,
+small gap: 5pt where every node is labelled, and 2pt where only a
+selection is, so that each label stays against the node it names.
+Set to \code{0} for labels right at the node border,
 or to a larger value (e.g. \code{15}) for more spacing.
 Only used when \code{labels = TRUE} and \code{label_repel = TRUE}
 (as the padding passed to the repel algorithm) or \code{label_repel = FALSE}
@@ -204,6 +211,29 @@ when a network has enough edges; for directed networks arrowheads are
 retained, but the slight reciprocal-tie curvature used for unbundled edges
 does not apply.}
 
+\item{edge_arrows}{Whether, and at what size, to draw arrowheads on the ties
+of a directed network.
+By default (\code{NULL}) this is decided by the network:
+a directed network is drawn with arrowheads,
+except for a concept lattice from \code{manynet::to_concepts()} in the
+"layered" (its default) or "railway" layout.
+That is read as a Hasse diagram, where the direction of each tie is
+already given by which of its ends is drawn higher.
+In any other layout a concept lattice keeps its arrowheads.
+\code{TRUE} draws arrowheads whatever the network, and \code{FALSE} none.
+Arrowheads follow the width the ties are drawn at:
+2mm long at the default \code{edge_size} of 0.5, and longer on wider ties,
+up to 4mm. Where the widths vary, as when they are mapped from a tie
+attribute, one size is chosen for all of the arrowheads from the mean
+width drawn.
+A number, e.g. \code{edge_arrows = 3}, draws arrowheads of that length in
+millimetres instead, whatever the width of the ties.
+This is the unit that \code{{ggplot2}} sizes are given in, as \code{node_size} is,
+so an arrowhead of 3 is a little longer than a node of 3 is wide.
+Ties that are not drawn, as with \code{edge_size = 0}, have no arrowheads.
+An undirected network has no direction to show,
+so the argument is ignored there.}
+
 \item{backbone}{How to treat the network's backbone: the ties that a local
 null model keeps, because they carry more weight, or sit in more
 triangles, than chance alone would put there.
@@ -225,7 +255,7 @@ Only the layouts that read tie lengths -- "stress" (the default), "fr",
 "drl" and "kk" -- are laid out this way. Every other layout, including
 those that already carry meaning in their coordinates such as "layered"
 or "scaling", keeps its coordinates and only fades its ties.
-Requires \code{manynet} 2.3.0 or later, and does not apply to signed networks.}
+Does not apply to signed networks.}
 
 \item{.shared}{Internal. A list of the aesthetic ranges and categories found
 across a list of networks, which \code{graphs()} uses to draw and label each of
@@ -265,18 +295,23 @@ try \code{run_tute("Visualisation")}.
 graphr(ison_adolescents)
 ison_adolescents |>
   mutate(color = rep(c("introvert","extrovert"), times = 4),
-         size = ifelse(netrics::node_is_cutpoint(ison_adolescents), 6, 3)) |>
+         size = c(3, 6, 3, 3, 3, 6, 6, 3)) |>
   mutate_ties(ecolor = rep(c("friends", "acquaintances"), times = 5)) |>
   graphr(node_color = "color", node_size = "size",
          edge_size = 1.5, edge_color = "ecolor")
 graphr(ison_southern_women, labels = TRUE, label_dist = 10)
-graphr(ison_southern_women, labels = TRUE, label_repel = FALSE)
 # Label a selection of the nodes rather than all of them
 graphr(ison_southern_women, labels = 2)
-graphr(ison_southern_women, labels = "betweenness")
 graphr(ison_adolescents, labels = c("Alice", "Betty"))
+\donttest{
+graphr(ison_southern_women, labels = TRUE, label_repel = FALSE)
+graphr(ison_southern_women, labels = "betweenness")
 graphr(manynet::generate_random(40, 0.1), edge_bundle = TRUE)
+# Larger arrowheads than the width of the ties would give, or none at all
+graphr(ison_networkers, edge_arrows = 4)
+graphr(ison_networkers, edge_arrows = FALSE)
 graphr(manynet::generate_random(80, 0.2), backbone = TRUE)
+}
 }
 \seealso{
 Other mapping:
